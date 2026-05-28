@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"ride-sharing/shared/env"
+	"meridian/shared/env"
 )
 
 var (
@@ -13,11 +13,16 @@ var (
 
 func main() {
 	log.Println("Starting API Gateway")
+	mux := http.NewServeMux()
+	server := http.Server{
+		Addr:    httpAddr,
+		Handler: mux,
+	}
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hello from API Gateway"))
-	})
+	mux.HandleFunc("/", welcomewala)
+	mux.HandleFunc("POST /trip/preview", handleTripPreview)
 
-	http.ListenAndServe(httpAddr, nil)
+	if err := server.ListenAndServe(); err != nil {
+		log.Print("http server error", err)
+	}
 }
