@@ -42,7 +42,7 @@ export default function RiderMap({ onRouteSelected }: RiderMapProps) {
 
     const location = {
         latitude: 26.2495,
-        longitude: 78.1728,
+        longitude: 78.1700,
     };
 
     const {

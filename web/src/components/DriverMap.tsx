@@ -14,8 +14,8 @@ import { DriverCard } from "./DriverCard";
 import { TripEvents } from "../contracts";
 
 const START_LOCATION: Coordinate = {
-   latitude: 26.2183,
-        longitude: 78.1828,
+   latitude: 26.2124,
+        longitude: 78.1778,
 }
 
 const driverMarker = new L.Icon({
