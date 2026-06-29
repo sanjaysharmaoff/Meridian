@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"meridian/services/api-gateway/grpc_clients"
 	"meridian/shared/contracts"
 	"net/http"
 )
@@ -26,6 +27,12 @@ func handleTripPreview(w http.ResponseWriter, r *http.Request) {
 
 	jsonbody, _ := json.Marshal(reqBody)
 	reader := bytes.NewReader(jsonbody)
+
+	tripService, err := grpc_clients.NewTripServiceClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer tripService.Close()
 
 	resp, err := http.Post("http://trip-service:8083/preview", "application/json", reader)
 	if err != nil {
