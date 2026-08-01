@@ -3,19 +3,22 @@ package main
 import (
 	"context"
 	"log"
+	"meridian/services/trip-service/internal/infrastructure/grpc"
+	"meridian/services/trip-service/internal/infrastructure/repository"
+	"meridian/services/trip-service/internal/service"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"google.golang.org/grpc"
+	grpcServer "google.golang.org/grpc"
 )
 
 var GrpcAddr = ":9093"
 
 func main() {
-	// inmem := repository.NewInmemRepository()
-	// svc := service.NewService(inmem)
+	inmem := repository.NewInmemRepository()
+	svc := service.NewService(inmem)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -32,8 +35,10 @@ func main() {
 		log.Fatalf("failed to Listen %v", err)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpcServer.NewServer()
 	log.Printf("the grpc server is starting at %v", lis.Addr().String())
+
+	grpc.NewGrpcHandler(grpcServer, svc)
 
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {

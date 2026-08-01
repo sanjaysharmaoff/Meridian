@@ -33,7 +33,7 @@ func handleDriversWebSocket(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Print("error parsing message from websocker", err)
 		}
-		log.Print(message)
+		log.Print(string(message))
 	}
 }
 
@@ -45,7 +45,7 @@ func handleRidersWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := r.URL.Query().Get("userID")
 	if userID == "" {
-		log.Print("No userID found :", err)
+		log.Print("No userID found :")
 	}
 
 	packageSlug := r.URL.Query().Get("packageSlug")
@@ -88,6 +88,7 @@ func handleRidersWebSocket(w http.ResponseWriter, r *http.Request) {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			log.Print("error parsing message from websocker", err)
+			break
 		}
 		log.Print(message)
 	}

@@ -13,9 +13,21 @@ import { RoutingControl } from "./RoutingControl";
 import { DriverCard } from "./DriverCard";
 import { TripEvents } from "../contracts";
 
+// const START_LOCATION: Coordinate = {
+//    latitude: 26.2124,
+//         longitude: 78.1778,
+// }
+
+
+// const START_LOCATION: Coordinate = {
+//   latitude: 37.7749,
+//   longitude: -122.4194,
+// }
+
+
 const START_LOCATION: Coordinate = {
-   latitude: 26.2124,
-        longitude: 78.1778,
+  latitude: 18.9402,
+  longitude: 72.8356,
 }
 
 const driverMarker = new L.Icon({
