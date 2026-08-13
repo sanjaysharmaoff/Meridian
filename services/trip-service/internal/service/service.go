@@ -93,7 +93,7 @@ func getBaseFares() []*domain.RideFareModel {
 	return basefare
 }
 
-func (h *service) GenerateFare(ctx context.Context, UserID string, Fare []*domain.RideFareModel) ([]*domain.RideFareModel, error) {
+func (h *service) GenerateFare(ctx context.Context, UserID string, Fare []*domain.RideFareModel, route *triptype.OsrmApiResponse) ([]*domain.RideFareModel, error) {
 	fares := make([]*domain.RideFareModel, len(Fare))
 
 	for i := range fares {
@@ -103,6 +103,7 @@ func (h *service) GenerateFare(ctx context.Context, UserID string, Fare []*domai
 			PackageSlug:       Fare[i].PackageSlug,
 			UserID:            UserID,
 			TotalPriceInCents: Fare[i].TotalPriceInCents,
+			Route:             route,
 		}
 		if err := h.repo.SaveRideFare(ctx, fare); err != nil {
 			log.Print("error saving the fare :", err)

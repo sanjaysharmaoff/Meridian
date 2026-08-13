@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"log"
+	"meridian/shared/env"
+	"meridian/shared/messaging"
 	"net"
 	"os"
 	"os/signal"
@@ -16,6 +18,7 @@ var GrpcAddr = ":9092"
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	rabbitMqURI := env.GetString("RABBITMQ_URI", "amqp://guest:guest@rabbitmq:5672/")
 	go func() {
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
@@ -27,6 +30,13 @@ func main() {
 		log.Fatalf("failed to listen : %v ", err)
 	}
 	svc := NewService()
+	rabbitmq, err := messaging.NewRabbitMQ(rabbitMqURI)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rabbitmq.Close()
+
+	log.Println("Starting RabbitMQ connection")
 	grpcServer := grpcserver.NewServer()
 	NewGrpcHandler(grpcServer, svc)
 	log.Printf("starting gRPC server for Driver service of port %s", lis.Addr().String())

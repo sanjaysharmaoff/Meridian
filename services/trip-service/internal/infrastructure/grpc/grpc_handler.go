@@ -42,7 +42,7 @@ func (h *grpcHandler) PreviewTrip(ctx context.Context, req *pb.PreviewTripReques
 	}
 
 	estimatedFares := h.service.EstimateFare(route)
-	fares, err := h.service.GenerateFare(ctx, req.GetUserID(), estimatedFares)
+	fares, err := h.service.GenerateFare(ctx, req.GetUserID(), estimatedFares, route)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "problem generating the fare: %v", err)
 	}

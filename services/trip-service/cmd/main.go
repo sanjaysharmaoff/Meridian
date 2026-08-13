@@ -6,6 +6,8 @@ import (
 	"meridian/services/trip-service/internal/infrastructure/grpc"
 	"meridian/services/trip-service/internal/infrastructure/repository"
 	"meridian/services/trip-service/internal/service"
+	"meridian/shared/env"
+	"meridian/shared/messaging"
 	"net"
 	"os"
 	"os/signal"
@@ -19,7 +21,7 @@ var GrpcAddr = ":9093"
 func main() {
 	inmem := repository.NewInmemRepository()
 	svc := service.NewService(inmem)
-
+	rabbitMqURI := env.GetString("RABBITMQ_URI", "amqp://guest:guest@rabbitmq:5672/")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -34,6 +36,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to Listen %v", err)
 	}
+
+	rabbitmq, err := messaging.NewRabbitMQ(rabbitMqURI)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rabbitmq.Close()
+
+	log.Println("Starting RabbitMQ connection")
 
 	grpcServer := grpcServer.NewServer()
 	log.Printf("the grpc server is starting at %v", lis.Addr().String())

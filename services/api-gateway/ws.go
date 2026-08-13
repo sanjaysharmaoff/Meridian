@@ -2,8 +2,9 @@ package main
 
 import (
 	"log"
+	"meridian/services/api-gateway/grpc_clients"
 	"meridian/shared/contracts"
-	"meridian/shared/util"
+	"meridian/shared/proto/driver"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -15,18 +16,17 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handleDriversWebSocket(w http.ResponseWriter, r *http.Request) {
+func handleRidersWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("error in establishing connection :", err)
 		return
 	}
+	defer conn.Close()
 	userID := r.URL.Query().Get("userID")
 	if userID == "" {
 		log.Print("No userID found :", err)
 	}
-
-	defer conn.Close()
 
 	for {
 		_, message, err := conn.ReadMessage()
@@ -37,12 +37,13 @@ func handleDriversWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleRidersWebSocket(w http.ResponseWriter, r *http.Request) {
+func handleDriversWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("error in establishing connection :", err)
 		return
 	}
+	defer conn.Close()
 	userID := r.URL.Query().Get("userID")
 	if userID == "" {
 		log.Print("No userID found :")
@@ -53,36 +54,39 @@ func handleRidersWebSocket(w http.ResponseWriter, r *http.Request) {
 		log.Print("No package slug found :", err)
 	}
 
-	carPlate := r.URL.Query().Get("carPlate")
-	if carPlate == "" {
-		carPlate = "abc123"
+	ctx := r.Context()
+	driverService, err := grpc_clients.NewDriverServiceClient()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	type Driver struct {
-		Id             string `json:"id"`
-		Name           string `json:"name"`
-		ProfilePicture string `json:"profile_picture"`
-		CarPlate       string `json:"car_plate"`
-		PackageSlug    string `json:"package_slug"`
+	defer func() {
+		driverService.Client.UnregisterDriver(ctx, &driver.RegisterDriverRequest{
+			DriverID:    userID,
+			PackageSlug: packageSlug,
+		})
+		driverService.Close()
+		log.Println("Driver unregistered: ", userID)
+	}()
+
+	driverData, err := driverService.Client.RegisterDriver(ctx, &driver.RegisterDriverRequest{
+		DriverID:    userID,
+		PackageSlug: packageSlug,
+	})
+	if err != nil {
+		log.Printf("Error Registering Driver : %v", err)
+		return
 	}
 
 	msg := contracts.WSMessage{
 		Type: "driver.cmd.register",
-		Data: Driver{
-			Id:             userID,
-			Name:           "Sanjay",
-			ProfilePicture: util.GetRandomAvatar(1),
-			CarPlate:       carPlate,
-			PackageSlug:    packageSlug,
-		},
+		Data: driverData.Driver,
 	}
 
 	if err = conn.WriteJSON(msg); err != nil {
 		log.Print("error sending message", err)
 		return
 	}
-
-	defer conn.Close()
 
 	for {
 		_, message, err := conn.ReadMessage()
