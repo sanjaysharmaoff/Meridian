@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"meridian/services/trip-service/internal/infrastructure/events"
 	"meridian/services/trip-service/internal/infrastructure/grpc"
 	"meridian/services/trip-service/internal/infrastructure/repository"
 	"meridian/services/trip-service/internal/service"
@@ -43,13 +44,13 @@ func main() {
 	}
 	defer rabbitmq.Close()
 
+	publisher := events.NewTripEventPublisher(rabbitmq)
 	log.Println("Starting RabbitMQ connection")
 
 	grpcServer := grpcServer.NewServer()
 	log.Printf("the grpc server is starting at %v", lis.Addr().String())
 
-	grpc.NewGrpcHandler(grpcServer, svc)
-
+	grpc.NewGrpcHandler(grpcServer, svc, publisher)
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Printf("grpc server has encountered an error: %v", err)

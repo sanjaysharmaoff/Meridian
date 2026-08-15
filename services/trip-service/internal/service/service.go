@@ -7,6 +7,7 @@ import (
 	"log"
 	"meridian/services/trip-service/internal/domain"
 	triptype "meridian/services/trip-service/pkg/types"
+	"meridian/shared/env"
 	pb "meridian/shared/proto/trip"
 	"meridian/shared/types"
 	"net/http"
@@ -37,7 +38,16 @@ func (s *service) CreateTrip(ctx context.Context, fare *domain.RideFareModel) (*
 }
 
 func (s *service) GetRoute(ctx context.Context, pickup, destination *types.Coordinate) (*triptype.OsrmApiResponse, error) {
-	url := fmt.Sprintf("http://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f?overview=full&geometries=geojson", pickup.Longitude, pickup.Latitude, destination.Longitude, destination.Latitude)
+	baseURL := env.GetString("OSRM_API", "http://router.project-osrm.org")
+
+	url := fmt.Sprintf(
+		"%s/route/v1/driving/%f,%f;%f,%f?overview=full&geometries=geojson",
+		baseURL,
+		pickup.Longitude, pickup.Latitude,
+		destination.Longitude, destination.Latitude,
+	)
+
+	log.Printf("Started Fetching from OSRM API: URL: %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch route from OSRM API: %v", err)
