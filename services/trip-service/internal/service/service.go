@@ -8,6 +8,7 @@ import (
 	"meridian/services/trip-service/internal/domain"
 	triptype "meridian/services/trip-service/pkg/types"
 	"meridian/shared/env"
+	pbd "meridian/shared/proto/driver"
 	pb "meridian/shared/proto/trip"
 	"meridian/shared/types"
 	"net/http"
@@ -137,4 +138,12 @@ func (s *service) GetAndValidateFare(ctx context.Context, fareID, userID string)
 		return nil, fmt.Errorf("userID does not match the fair")
 	}
 	return fare, nil
+}
+
+func (s *service) GetTripByID(ctx context.Context, id string) (*domain.TripModel, error) {
+	return s.repo.GetTripByID(ctx, id)
+}
+
+func (s *service) UpdateTrip(ctx context.Context, tripID string, status string, driver *pbd.Driver) error {
+	return s.repo.UpdateTrip(ctx, tripID, status, driver)
 }

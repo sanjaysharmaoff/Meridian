@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	triptype "meridian/services/trip-service/pkg/types"
+	pbd "meridian/shared/proto/driver"
 	pb "meridian/shared/proto/trip"
 	"meridian/shared/types"
 
@@ -32,6 +33,8 @@ type TripRepository interface {
 	CreateTrip(ctx context.Context, trip *TripModel) (*TripModel, error)
 	SaveRideFare(ctx context.Context, ridefare *RideFareModel) error
 	GetRideFareByID(context context.Context, id string) (*RideFareModel, error)
+	GetTripByID(ctx context.Context, id string) (*TripModel, error)
+	UpdateTrip(ctx context.Context, tripID string, status string, driver *pbd.Driver) error
 }
 
 type TripService interface {
@@ -40,4 +43,6 @@ type TripService interface {
 	GenerateFare(ctx context.Context, UserID string, Fare []*RideFareModel, Route *triptype.OsrmApiResponse) ([]*RideFareModel, error)
 	EstimateFare(osrm *triptype.OsrmApiResponse) []*RideFareModel
 	GetAndValidateFare(ctx context.Context, fareID, userID string) (*RideFareModel, error)
+	GetTripByID(ctx context.Context, id string) (*TripModel, error)
+	UpdateTrip(ctx context.Context, tripID string, status string, driver *pbd.Driver) error
 }
