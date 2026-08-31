@@ -9,6 +9,7 @@ import (
 	"meridian/services/trip-service/internal/service"
 	"meridian/shared/env"
 	"meridian/shared/messaging"
+	"meridian/shared/tracing"
 	"net"
 	"os"
 	"os/signal"
@@ -20,11 +21,25 @@ import (
 var GrpcAddr = ":9093"
 
 func main() {
+	// Initialize Tracing
+	tracerCfg := tracing.Config{
+		ServiceName:    "trip-service",
+		Environment:    env.GetString("ENVIRONMENT", "development"),
+		JaegerEndpoint: env.GetString("JAEGER_ENDPOINT", "http://jaeger:14268/api/traces"),
+	}
+
+	sh, err := tracing.InitTracer(tracerCfg)
+	if err != nil {
+		log.Fatalf("Failed to initialize the tracer: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	defer sh(ctx)
+
 	inmem := repository.NewInmemRepository()
 	svc := service.NewService(inmem)
 	rabbitMqURI := env.GetString("RABBITMQ_URI", "amqp://guest:guest@rabbitmq:5672/")
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	go func() {
 		sigchan := make(chan os.Signal, 1)
@@ -52,7 +67,7 @@ func main() {
 	paymentConsumer := events.NewPaymentConsumer(rabbitmq, svc)
 	go paymentConsumer.Listen()
 
-	grpcServer := grpcServer.NewServer()
+	grpcServer := grpcServer.NewServer(tracing.WithTracingInterceptors()...)
 	log.Printf("the grpc server is starting at %v", lis.Addr().String())
 
 	grpc.NewGrpcHandler(grpcServer, svc, publisher)

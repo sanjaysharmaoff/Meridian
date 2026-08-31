@@ -2,6 +2,7 @@ package grpc_clients
 
 import (
 	pb "meridian/shared/proto/trip"
+	"meridian/shared/tracing"
 	"os"
 
 	"google.golang.org/grpc"
@@ -18,7 +19,14 @@ func NewTripServiceClient() (*tripServiceClient, error) {
 	if tripServiceURL == "" {
 		tripServiceURL = "trip-service:9093"
 	}
-	conn, err := grpc.NewClient(tripServiceURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	dialOptions := append(
+		tracing.DialOptionsWithTracing(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+
+	conn, err := grpc.NewClient(tripServiceURL, dialOptions...)
+	// conn, err := grpc.NewClient(tripServiceURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
